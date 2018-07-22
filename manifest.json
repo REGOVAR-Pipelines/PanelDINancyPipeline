@@ -1,7 +1,7 @@
 {
-    "name" : "MyTestPipeline",
-    "description" : "My test pipeline",
-    "version": "1.0.0",
+    "name" : "PanelDINancyPipeline",
+    "description" : "PanelDINancyPipeline",
+    "version": "0.1.0",
     "type": "job",
     "contacts" :
     [
