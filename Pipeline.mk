@@ -1,32 +1,35 @@
-# Inspired by a pipeline written by Tristan Dubos in 2018
+# Inspired by a bash pipeline written by Tristan Dubos in 2018
+
+REF=/regovar/database/hg19.fa
+INPUTS=/regovar/inputs
+OUPUTS=/regovar/outputs
+
+#patsubst: allows to change the extension and/or the path of the files
+#wildcard: allows to get a list of files with globbing
 
 all: \
-	fichier_brut_snp.vcf \
-	fichier_brut_indel.vcf \
-	VarScan.v2.3.9.jar
+	$(patsubst $(INPUTS)/%.fastq,$(OUTPUTS)/%_snp.vcf, $(wildcard $(INPUTS)/*.fastq)) \
+	$(patsubst $(INPUTS)/%.fastq,$(OUTPUTS)/%_indel.vcf, $(wildcard $(INPUTS)/*.fastq))
 
-fichier_brut.sam: ref_genome fichier_fastq
+%.sam: $(REF) %.fastq
 	bwa mem -t 4 $^ > $@
 
-fichier_brut.bam: fichier_brut.sam
+%.bam: %.sam
 	samtools view -b -S $< > $@
 
-fichier_brut_sorted.bam: fichier_brut.bam
+%_sorted.bam: %.bam
 	samtools sort $< $@
 
-fichier_brut_sorted.bai: fichier_brut_sorted.bam
+%_sorted.bai: %_sorted.bam
 	samtools index $<
 
-fichier_brut.mpileup: fichier_brut_sorted.bam ref_genome
-	samtools mpileup -B -f ref_genome -Q 10 $< > $@
+%.mpileup: %_sorted.bam $(REF)
+	samtools mpileup -B -f $(REF) -Q 10 $< > $@
 
-fichier_brut_snp.vcf: fichier_brut.mpileup
+%_snp.vcf: %.mpileup
 	java -jar VarScan.v2.3.9.jar mpileup2snp $< --min-coverage 40 --min-var-freq 0.01 > $@
 
-fichier_brut_indel.vcf: fichier_brut.mpileup
+%_indel.vcf: %.mpileup
 	java -jar VarScan.v2.3.9.jar mpileup2indel $< --min-coverage 40  --min-var-freq 0.01 > $@
-
-VarScan.v2.3.9.jar:
-	curl -L https://sourceforge.net/projects/varscan/files/latest/download?source=files -o $@
 
 .PHONY: all

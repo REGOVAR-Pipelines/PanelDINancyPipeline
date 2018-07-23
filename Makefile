@@ -6,9 +6,10 @@ PACKAGE_NAME = $(shell sed -n 's/.*"name"\s*:\s*"\([^"]*\)".*/\1/p' manifest.jso
 
 package: $(PACKAGE_NAME)
 
-$(PACKAGE_NAME): doc Dockerfile form.json LICENSE manifest.json README run.sh
+$(PACKAGE_NAME): doc Dockerfile form.json LICENSE manifest.json README
 	zip -r $@ $^ 
 
+# To test the pipeline locally `make test`
 build:
 	docker build -t $(IMAGE_NAME) .
 
